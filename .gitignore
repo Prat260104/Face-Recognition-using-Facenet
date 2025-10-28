@@ -45,4 +45,5 @@ enroll_images/*  # Enrolled face images
 *.ckpt
 
 # Logs
-*.log
+*.logenroll_images/Prateek/
+face_db.pkl
