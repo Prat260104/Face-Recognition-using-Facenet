@@ -1,0 +1,48 @@
+# Python virtual environments
+venv311/
+venv311_new/
+env/
+.env/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Local development settings
+.env
+.env.local
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+face_db.pkl  # Face recognition database
+enroll_images/*  # Enrolled face images
+!enroll_images/.gitkeep  # Keep the empty directory
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyTorch model checkpoints (if any)
+*.pth
+*.pt
+*.ckpt
+
+# Logs
+*.log
