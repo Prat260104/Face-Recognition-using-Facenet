@@ -27,7 +27,10 @@ names = list(face_db.keys())
 db_embeddings = np.vstack([face_db[n] for n in names])
 
 last_seen = {}
-COOLDOWN = 3.0  # seconds
+COOLDOWN = 10.0  # seconds between repeated recognitions
+MIN_FRAMES_BETWEEN_RECOGNITIONS = 30  # minimum frames between recognitions
+frames_since_last_recognition = 0
+current_recognized_name = None  # track currently recognized person
 
 cap = cv2.VideoCapture(0)
 # Short test-run mode (useful for automated verification). Set env FR_TEST=1 to enable and
@@ -66,7 +69,11 @@ while True:
     boxes, probs = mtcnn.detect(img_rgb)
     faces = mtcnn(img_rgb)
 
-    if faces is not None:
+    # Reset current recognition if no faces detected
+    if faces is None:
+        current_recognized_name = None
+        frames_since_last_recognition += 1
+    else:
         # mtcnn may return:
         # - a single tensor with shape (3, H, W)
         # - a batched tensor with shape (N, 3, H, W)
@@ -95,8 +102,24 @@ while True:
             if score > 0.55:
                 name = names[idx]
                 now = time.time()
-                if name not in last_seen or now - last_seen[name] > COOLDOWN:
+                frames_since_last_recognition += 1
+                
+                # Only recognize if:
+                # 1. It's a new person OR
+                # 2. Same person but after cooldown AND minimum frames
+                # 3. No one is currently being recognized
+                should_recognize = (
+                    (name != current_recognized_name) or
+                    (name not in last_seen or (
+                        now - last_seen[name] > COOLDOWN and
+                        frames_since_last_recognition >= MIN_FRAMES_BETWEEN_RECOGNITIONS
+                    ))
+                )
+                
+                if should_recognize:
+                    current_recognized_name = name
                     last_seen[name] = now
+                    frames_since_last_recognition = 0
                     print(f"{name} recognized!")
                     # Speak the recognition out loud on macOS using the `say` command.
                     # Run asynchronously so we don't block the recognition loop.
@@ -131,7 +154,9 @@ while True:
             else:
                 # Fallback to top-left if no box
                 cv2.putText(frame, label, (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-    else:
+    if faces is None:
+        current_recognized_name = None
+        frames_since_last_recognition += 1
         cv2.putText(frame, "No face", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
     cv2.imshow("Face Recognition", frame)
